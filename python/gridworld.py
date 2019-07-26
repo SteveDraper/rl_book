@@ -71,13 +71,13 @@ if __name__ == "__main__":
     #
     # print()
 
-    evalues = mdp.evaluate_policy(eq_prob_random)
+    evalues, _ = mdp.evaluate_policy(eq_prob_random)
     print("Equi-probable random policy:")
     for y in range(5):
         print(" ".join([str(evalues[(x, y)]) for x in range(5)]))
 
-    opt_policy = mdp.optimize_policy(lambda _: Distribution.deterministic(Action.NORTH))
-    opt_values = mdp.evaluate_policy(opt_policy)
+    opt_policy, _ = mdp.optimize_policy(SimplePolicy(lambda _: Distribution.deterministic(Action.NORTH)))
+    opt_values, _ = mdp.evaluate_policy(opt_policy)
     print("\nOptimum policy:")
     for y in range(5):
         print(" ".join(["{}: {}".format(opt_policy((x, y)).sample(), opt_values[(x, y)]) for x in range(5)]))

@@ -87,19 +87,15 @@ class MDP(Generic[_State, _Action]):
             for state in self.system.states:
                 if not self.system.is_terminal(state):
                     action_dist = policy(state)
-                    v = 0.
                     greedy = stablize_policy or (random.random() < greedy_prob)
                     if greedy:
                         best_action = None
                         best_reward = float('-inf')
                         for action in self.system.actions:
-                            inner = 0.
-                            for outcome in self.system.dynamics.get((state, action), []):
-                                outcome_cprob = outcome.weight
-                                outcome_value = outcome.value[0] + self.discount*self.V[outcome.value[1]]
-                                inner += outcome_cprob*outcome_value
-                            if inner > best_reward + action_stability_margin:
-                                best_reward = inner
+                            action_reward = expectation(self.system.dynamics.get((state, action), []),
+                                                        lambda outcome: outcome[0] + self.discount*self.V[outcome[1]])
+                            if action_reward > best_reward + action_stability_margin:
+                                best_reward = action_reward
                                 best_action = action
                         v = best_reward
                         first = next(iter(action_dist))
@@ -107,14 +103,12 @@ class MDP(Generic[_State, _Action]):
                             policy.update(state, best_action)
                             policy_changed = True
                     else:
+                        v = 0.
                         for action in action_dist:
-                            inner = 0.
+                            action_reward = expectation(self.system.dynamics.get((state, action.value), []),
+                                                        lambda outcome: outcome[0] + self.discount*self.V[outcome[1]])
                             pi_action = action.weight
-                            for outcome in self.system.dynamics.get((state, action.value), []):
-                                outcome_cprob = outcome.weight
-                                outcome_value = outcome.value[0] + self.discount*self.V[outcome.value[1]]
-                                inner += outcome_cprob*outcome_value
-                            v += pi_action*inner
+                            v += pi_action*action_reward
                 else:
                     v = 0.
                 error = abs(v - self.V[state])
@@ -156,15 +150,13 @@ class MDP(Generic[_State, _Action]):
                     best_val = float('-inf')
                     best_action = None
                     for action in self.system.actions:
-                        inner = 0.
+                        action_reward = float('-inf')
                         outcomes = self.system.dynamics.get((state, action))
                         if outcomes is not None:
-                            for outcome in outcomes:
-                                outcome_cprob = outcome.weight
-                                outcome_value = outcome.value[0] + self.discount*V[outcome.value[1]]
-                                inner += outcome_cprob*outcome_value
-                        if inner > best_val + action_stability_margin:
-                            best_val = inner
+                            action_reward = expectation(self.system.dynamics.get((state, action)),
+                                                        lambda outcome: outcome[0] + self.discount*V[outcome[1]])
+                        if action_reward > best_val + action_stability_margin:
+                            best_val = action_reward
                             best_action = action
                     if best_action != old_action:
                         stable = False
@@ -198,7 +190,6 @@ class MDP(Generic[_State, _Action]):
                     if error > max_error:
                         max_error = error
                     q[sa] = new_q
-            print(max_error)
         return q
 
     @staticmethod

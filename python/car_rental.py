@@ -39,11 +39,13 @@ clip = clamp(0, MAX_CARS_AT_LOC)
 # Pre-calculate the Poisson joints we'll need
 returns_dists = [[None]*(MAX_CARS_AT_LOC+1) for _ in range(MAX_CARS_AT_LOC+1)]
 for (max1, max2) in product(range(MAX_CARS_AT_LOC+1), range(MAX_CARS_AT_LOC+1)):
-    returns_dists[max1][max2] = dist_product(Poisson(3, max_val=max1), Poisson(2, max_val=max2))
+    returns_dists[max1][max2] = dist_product(TruncatedPoisson(3, max_val=max1),
+                                             TruncatedPoisson(2, max_val=max2))
 
 request_dists = [[None]*(MAX_CARS_AT_LOC+1) for _ in range(MAX_CARS_AT_LOC+1)]
 for (max1, max2) in product(range(MAX_CARS_AT_LOC+1), range(MAX_CARS_AT_LOC+1)):
-    request_dists[max1][max2] = dist_product(Poisson(3, max_val=max1), Poisson(4, max_val=max2))
+    request_dists[max1][max2] = dist_product(TruncatedPoisson(3, max_val=max1),
+                                             TruncatedPoisson(4, max_val=max2))
 
 
 class OutcomeDistribution(Distribution[Tuple[float, State]]):

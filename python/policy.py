@@ -27,17 +27,9 @@ class SimplePolicy(Policy[_State, _Action]):
         return self.policy(state)
 
     def update(self, state: _State, action: _Action):
-        def new_policy(old: Callable[[_State], Distribution[_Action]],
-                       s: _State,
-                       a: _Action) -> Distribution[_Action]:
-            if s == state:
-                return Distribution.deterministic(a)
-            else:
-                return old(s)
-
-        old = next(iter(self.policy(state)))
-        if (old.value != action) or (old.weight != 1.):
-            self.policy = new_policy(self.policy, state, action)
+        if not isinstance(self.policy, Policy):
+            self.policy = MemoizedPolicy(self.policy)
+        self.policy.update(state, action)
 
     def clone(self) -> 'Policy':
         return SimplePolicy(self.policy)

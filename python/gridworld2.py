@@ -105,18 +105,18 @@ if __name__ == "__main__":
                          terminality=terminality), (0, 0), 1.0)
     mdp42_2 = MDP(System(adjust_states42(states),
                          Action,
-                         adjust_transitions42(transitions, include_to=False),
+                         adjust_transitions42(transitions, include_to=True),
                          terminality=terminality), (0, 0), 1.0)
 
-    evalues = mdp.evaluate_policy(eq_prob_random)
+    evalues, _ = mdp.evaluate_policy(eq_prob_random)
     print("Equi-probable random policy for (4.1):")
     print_v(evalues)
 
-    evalues = mdp42_1.evaluate_policy(eq_prob_random)
+    evalues, _ = mdp42_1.evaluate_policy(eq_prob_random)
     print("\nEqui-probable random policy for (4.2) without trans to:")
     print_v(evalues)
 
-    evalues = mdp42_2.evaluate_policy(eq_prob_random)
+    evalues, _ = mdp42_2.evaluate_policy(eq_prob_random)
     print("\nEqui-probable random policy for (4.2) with trans to:")
     print_v(evalues)
 

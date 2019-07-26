@@ -1,3 +1,6 @@
+"""
+Machinary and representation for discrete probability distributions with finite support
+"""
 from typing import Generic, TypeVar, Iterable, Tuple, Callable, List, Optional
 
 from itertools import product
@@ -50,6 +53,9 @@ class Distribution(Generic[_A]):
 
         assert False
 
+    def support(self) -> Iterable[_A]:
+        yield from (e.value for e in self.prob_fn())
+
     @classmethod
     def deterministic(cls, value: _A) -> 'Distribution[_A]':
         return cls(lambda: [Weighted(value, 1.)])
@@ -84,6 +90,9 @@ class StrictDistribution(Distribution[_A]):
     def _outcomes(self):
         for idx, v in enumerate(self.values):
             yield Weighted(v, float(self.probs[idx]))
+
+    def support(self) -> Iterable[_A]:
+        return self.values
 
 
 class _StrictProduct(Distribution[Tuple[_A, _B]]):
@@ -123,7 +132,7 @@ def dist_product(d1: Distribution[_A],
     return JointDistribution(d1, d2)
 
 
-def Poisson(lmda: float, max_val: int=20, discard_threshold=0.001) -> Distribution[int]:
+def TruncatedPoisson(lmda: float, max_val: int=20, discard_threshold=0.001) -> Distribution[int]:
     def generator():
         total = 0.
         n_bang = 1.
@@ -144,3 +153,8 @@ def Poisson(lmda: float, max_val: int=20, discard_threshold=0.001) -> Distributi
     return StrictDistribution(generator, normalize=False)
 
 
+def expectation(dist: Distribution[_A], f: Callable[[_A], float]) -> float:
+    total = 0.
+    for e in dist:
+        total += e.weight*f(e.value)
+    return total
