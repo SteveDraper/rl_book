@@ -9,6 +9,9 @@ from itertools import product
 
 from distribution import *
 from mdp import *
+from mdp_environment import MDPEnvironment
+
+import random
 
 
 class Action(Enum):
@@ -127,3 +130,8 @@ if __name__ == "__main__":
     p_star = MDP.policy_from_q_star(opt_q)
     print("pi* for (4.1):")
     print_policy(p_star)
+
+    env = MDPEnvironment(mdp)
+    for i in range(5):
+        trajectory = env.sample_episode(p_star, start_state=(random.randrange(4), random.randrange(4)))
+        print(trajectory)

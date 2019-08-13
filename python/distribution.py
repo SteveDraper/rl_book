@@ -43,15 +43,18 @@ class Distribution(Generic[_A]):
     def __str__(self):
         return str({e.value: e.weight for e in self.prob_fn()})
 
-    def sample(self) -> _A:
+    def sample_weighted(self) -> Weighted[_A]:
         p = random.random()
         for e in self:
             if e.weight > p:
-                return e.value
+                return e
             else:
                 p -= e.weight
 
         assert False
+
+    def sample(self) -> _A:
+        return self.sample_weighted().value
 
     def support(self) -> Iterable[_A]:
         yield from (e.value for e in self.prob_fn())
@@ -59,6 +62,11 @@ class Distribution(Generic[_A]):
     @classmethod
     def deterministic(cls, value: _A) -> 'Distribution[_A]':
         return cls(lambda: [Weighted(value, 1.)])
+
+    @classmethod
+    def uniform(cls, values: Iterable[_A]) -> 'Distribution[_A]':
+        vl = list(values)
+        return cls(lambda: [Weighted(v, 1./len(vl)) for v in vl])
 
 
 class StrictDistribution(Distribution[_A]):
@@ -130,6 +138,26 @@ class JointDistribution(Distribution[Tuple[_A, _B]]):
 def dist_product(d1: Distribution[_A],
                  d2: Distribution[_B]) -> Distribution[Tuple[_A, _B]]:
     return JointDistribution(d1, d2)
+
+
+class MixingDistribution(Distribution[_A]):
+    def __init__(self,
+                 d1: Distribution[_A],
+                 d2: Distribution[_A],
+                 d1_weight: float,
+                 d2_weight: float):
+        self.d1 = d1
+        self.d2 = d2
+        self.d1_weight = d1_weight
+        self.d2_weight = d2_weight
+
+    def __iter__(self):
+        weighted = {}
+        for e in self.d1:
+            weighted[e.value] = self.d1_weight*e.weight
+        for e in self.d2:
+            weighted[e.value] = weighted.get(e.value, 0.) + self.d2_weight*e.weight
+        return Distribution(lambda: [Weighted(v, w) for v, w in weighted.items()]).__iter__()
 
 
 def TruncatedPoisson(lmda: float, max_val: int=20, discard_threshold=0.001) -> Distribution[int]:

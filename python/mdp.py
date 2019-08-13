@@ -39,8 +39,8 @@ class MDP(Generic[_State, _Action]):
     def reset(self, state=None):
         self.state = state if state is not None else self.initial_state
 
-    def _sample_result(self, s: _State, a: _Action):
-        dist = self.system.dynamics.get((s, a))
+    def sample_result(self, a: _Action):
+        dist = self.system.dynamics.get((self.state, a))
         if dist is None:
             raise ValueError('Illegal state/action combo')
         else:
@@ -49,7 +49,7 @@ class MDP(Generic[_State, _Action]):
     def apply_policy(self, policy: Policy) -> float:
         if not self.system.is_terminal(self.state):
             action = policy(self.state).sample()
-            reward, new_state = self._sample_result(self.state, action)
+            reward, new_state = self.sample_result(self.state, action)
             self.state = new_state
             return reward
         else:
